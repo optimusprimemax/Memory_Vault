@@ -11,6 +11,7 @@
     }
     body {
         background: #87ceeb;
+        touch-action: manipulation; /* improve mobile touch response */
     }
     canvas {
         display: block;
@@ -28,7 +29,7 @@ const ctx = canvas.getContext("2d");
 // -------------------- GAME VARIABLES --------------------
 let GROUND_Y = 0;
 let gameSpeed = 6;
-let gravity = 0.55;
+let gravity = 0.65;
 let gameOver = false;
 let score = 0;
 let frame = 0;
@@ -39,7 +40,8 @@ function resizeCanvas() {
     canvas.height = window.innerHeight;
     GROUND_Y = canvas.height - 90;
 
-    // keep player on ground after resize
+    // Keep player on ground and near left edge
+    player.x = canvas.width * 0.05;
     player.y = GROUND_Y - player.height;
 }
 window.addEventListener("resize", resizeCanvas);
@@ -56,7 +58,7 @@ heartImg.src = "heart.png";
 
 // -------------------- PLAYER --------------------
 const player = {
-    x: canvas.width * 0.05,  // 5% from left
+    x: 0,  // will be set on resize
     y: 0,
     width: 95,
     height: 95,
@@ -69,6 +71,7 @@ const player = {
     update() {
         this.velocityY += gravity;
         this.y += this.velocityY;
+
         if (this.y > GROUND_Y - this.height) {
             this.y = GROUND_Y - this.height;
             this.velocityY = 0;
@@ -78,13 +81,6 @@ const player = {
         ctx.drawImage(charImg, this.x, this.y, this.width, this.height);
     }
 };
-    draw() {
-        ctx.drawImage(charImg, this.x, this.y, this.width, this.height);
-    }
-};
-
-// Call resize AFTER player exists
-resizeCanvas();
 
 // -------------------- OBSTACLES --------------------
 let obstacles = [];
@@ -93,17 +89,9 @@ function spawnObstacle() {
     obstacles.push({
         x: canvas.width,
         y: GROUND_Y - size,
-        width: 80,
-        height: 50
+        width: size,
+        height: size
     });
-}
-   function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    GROUND_Y = canvas.height - 90;
-
-    player.x = canvas.width * 0.05; // keep it left
-    player.y = GROUND_Y - player.height;
 }
 
 // -------------------- HEARTS --------------------
@@ -112,8 +100,8 @@ function spawnHeart(x) {
     hearts.push({
         x: x,
         y: GROUND_Y - 45,
-        width: 55,
-        height: 55
+        width: 45,
+        height: 45
     });
 }
 
@@ -187,6 +175,7 @@ function animate() {
             if (Math.random() > 0.6) spawnHeart(canvas.width + 120);
         }
 
+        // Obstacles
         obstacles.forEach((o, i) => {
             o.x -= gameSpeed;
             ctx.drawImage(zombieImg, o.x, o.y, o.width, o.height);
@@ -194,6 +183,7 @@ function animate() {
             if (o.x + o.width < 0) obstacles.splice(i, 1);
         });
 
+        // Hearts
         hearts.forEach((h, i) => {
             h.x -= gameSpeed;
             ctx.drawImage(heartImg, h.x, h.y, h.width, h.height);
@@ -204,6 +194,7 @@ function animate() {
             if (h.x + h.width < 0) hearts.splice(i, 1);
         });
 
+        // Score
         ctx.fillStyle = "#000";
         ctx.font = "28px Arial";
         ctx.fillText("❤️ " + score, 30, 40);
@@ -220,10 +211,10 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
+// -------------------- START GAME --------------------
+resizeCanvas();
 animate();
 </script>
 
 </body>
 </html>
-
-
