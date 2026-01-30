@@ -29,7 +29,7 @@ const ctx = canvas.getContext("2d");
 // -------------------- GAME VARIABLES --------------------
 let GROUND_Y = 0;
 let gameSpeed = 6;
-let gravity = 0.65;
+let gravity = 0.5;
 let gameOver = false;
 let score = 0;
 let frame = 0;
@@ -60,8 +60,8 @@ heartImg.src = "heart.png";
 const player = {
     x: 0,  // will be set on resize
     y: 0,
-    width: 95,
-    height: 95,
+    width: 150,
+    height: 150,
     velocityY: 0,
     jump() {
         if (this.y >= GROUND_Y - this.height) {
@@ -89,8 +89,8 @@ function spawnObstacle() {
     obstacles.push({
         x: canvas.width,
         y: GROUND_Y - size,
-        width: size,
-        height: size
+        width: 70,
+        height: 70
     });
 }
 
