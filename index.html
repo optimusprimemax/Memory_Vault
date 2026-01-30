@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Vault 💖</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; font-family:'Poppins', sans-serif; }
+body { margin:0; min-height:100vh; background:linear-gradient(135deg,#f8cdda,#fbd3e9); color:#333; }
+.center { height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:12px; text-align:center; }
+h1,h2{ font-family:'Playfair Display', serif; }
+input,textarea { padding:12px; border-radius:25px; border:none; width:220px; text-align:center; outline:none; margin:5px 0; }
+button { padding:10px 22px; border-radius:25px; border:none; background:#ff7eb3; color:white; cursor:pointer; transition:.3s; font-size:15px; }
+button:hover { transform:scale(1.05); }
+.hidden { display:none; }
+header { text-align:center; padding:30px 15px; }
+.buttons { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
+.card { max-width:900px; margin:20px auto; background:white; padding:22px; border-radius:22px; box-shadow:0 12px 30px rgba(0,0,0,.12); animation:fade .6s ease; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; }
+.photo { background:#ffe0ec; padding:10px; border-radius:15px; text-align:center; }
+.photo img { width:100%; height:160px; object-fit:cover; border-radius:12px; margin-bottom:6px; }
+.photo p { font-size:13px; }
+#error { color:crimson; font-size:14px; }
+#messages { margin-top:15px; max-height:200px; overflow-y:auto; background:#ffeef2; padding:10px; border-radius:15px; text-align:left; }
+.message { margin-bottom:8px; padding:6px 10px; background:#fff0f5; border-radius:12px; }
+@keyframes fade { from {opacity:0; transform:translateY(12px);} to {opacity:1; transform:translateY(0);} }
+
+canvas { background:#87ceeb; display:block; margin: 0 auto; border-radius:15px; max-width:100%; height:auto; }
+#jumpBtn { display:none; position:fixed; bottom:20px; right:20px; padding:20px; font-size:20px; background:#ff7eb3; border:none; border-radius:50%; color:white; z-index:1000; }
+@media (max-width:600px){ #jumpBtn{display:block;} }
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div id="lock" class="center">
+  <h1>This place is only for you 🤍</h1>
+  <input id="password" type="password" placeholder="Enter the secret">
+  <button onclick="unlock()">Unlock</button>
+  <p id="error"></p>
+</div>
+
+<!-- VAULT -->
+<div id="vault" class="hidden">
+
+  <header>
+    <h1>Welcome, my love 🌙</h1>
+    <p>I made this little world just to keep our memories safe.</p>
+  </header>
+
+  <div class="buttons">
+    <button onclick="showSection('memories')">📸 Memories</button>
+    <button onclick="showSection('letters')">💌 Letters</button>
+    <button onclick="showSection('miss')">🌙 Miss Me</button>
+    <button onclick="showSection('game')">🎮 Play</button>
+  </div>
+
+  <!-- MEMORIES -->
+  <section id="memories" class="card hidden">
+    <h2>Our Memories</h2>
+    <div class="grid">
+      <div class="photo"><img src="img1.jpg"><p>Speical Photo❤️</p></div>
+      <div class="photo"><img src="img2.jpg"><p>Heartbeat💗</p></div>
+      <div class="photo"><img src="img3.jpg"><p>Favorite One🌹</p></div>
+      <div class="photo"><img src="img4.jpg"><p>One of the Cutest😭</p></div>
+      <div class="photo"><img src="img5.jpg"><p>Cutu😙</p></div>
+      <div class="photo"><img src="img6.jpg"><p>Beautiful🥹</p></div>
+      <div class="photo"><img src="img7.jpeg"><p>Last Moment🥲</p></div>
+      <div class="photo"><img src="img8.jpeg"><p>Unforgettable Call😅</p></div>
+      <div class="photo"><img src="img9.jpg"><p>Perfect✨</p></div>
+      <div class="photo"><img src="img10.jpg"><p>Cute😂</p></div>
+      <div class="photo"><img src="img11.jpg"><p>Besttttt🥹❤️</p></div>
+    </div>
+  </section>
+
+  <!-- LETTERS -->
+  <section id="letters" class="card hidden">
+    <h2>Letters for You</h2>
+    <p>
+      Loving you feels easy.  
+      Even on hard days, thinking about you makes things softer.
+      Thank you for being my favorite person.
+    </p>
+  </section>
+
+  <!-- MISS ME -->
+  <section id="miss" class="card hidden">
+    <h2>Miss Me 💌</h2>
+    <p>Type something if you are missing me 😭</p>
+    <input type="text" id="missInput" placeholder="I miss you...">
+    <button onclick="sendMessage()">Send</button>
+    <div id="messages"></div>
+  </section>
+
+  <!-- GAME -->
+  <section id="game" class="card hidden">
+    <h2>Zombie Runner 🎮</h2>
+    <canvas id="gameCanvas" width="800" height="200"></canvas>
+    <p>Jump over zombies! Collect hearts ❤️. Space / ↑ to jump, or tap button on mobile.</p>
+    <button id="jumpBtn" onclick="playerJump()">⬆️</button>
+  </section>
+
+</div>
+
+<script>
+// -------------------
+// Lock Screen
+// -------------------
+const SECRET = "forever";
+function unlock() {
+  const input = document.getElementById("password").value;
+  const error = document.getElementById("error");
+  if(input===SECRET){ document.getElementById("lock").classList.add("hidden"); document.getElementById("vault").classList.remove("hidden"); }
+  else { error.innerText="Nope 😅 this isn’t for you"; }
+}
+
+// -------------------
+// Section Switch
+// -------------------
+function showSection(id){
+  document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+}
+
+// -------------------
+// MISS ME MESSAGE
+// -------------------
+function sendMessage(){
+  const text = document.getElementById("missInput").value;
+  if(text.trim()!==""){
+    const div = document.createElement("div");
+    div.className="message";
+    div.innerText=text;
+    document.getElementById("messages").appendChild(div);
+    document.getElementById("missInput").value="";
+    document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+  }
+}
+
+// -------------------
+// ZOMBIE RUNNER GAME
+// -------------------
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let cw = canvas.width;
+let ch = canvas.height;
+
+// Player
+const player = {x:50, y:ch-50, width:30, height:30, dy:0, gravity:0.8, jumpPower:-12, grounded:false};
+
+// Images
+const zombieImg = new Image(); zombieImg.src = "zombie.png";
+const heartImg = new Image(); heartImg.src = "heart.png";
+
+// Controls
+const keys = {up:false};
+document.addEventListener('keydown', e=>{ if(e.key===' ' || e.key==='ArrowUp') keys.up=true; });
+document.addEventListener('keyup', e=>{ if(e.key===' ' || e.key==='ArrowUp') keys.up=false; });
+function playerJump(){ if(player.grounded) player.dy=player.jumpPower; player.grounded=false; }
+
+// Game variables
+let obstacles=[], hearts=[], score=0, speed=5, gameOver=false;
+function resetGame(){ obstacles=[]; hearts=[]; score=0; speed=5; player.y=ch-50; player.dy=0; gameOver=false; }
+
+// Generate obstacles/hearts
+function generate(){
+  if(Math.random()<0.02) obstacles.push({x:cw, y:ch-40, width:30, height:30});
+  if(Math.random()<0.01) hearts.push({x:cw, y:ch-60, width:20, height:20});
+}
+
+// Update loop
+function update(){
+  ctx.clearRect(0,0,cw,ch);
+
+  if(!gameOver){
+    generate();
+
+    // Player physics
+    player.dy += player.gravity;
+    player.y += player.dy;
+    if(player.y+player.height>=ch){ player.y=ch-player.height; player.dy=0; player.grounded=true; }
+    else player.grounded=false;
+
+    if(keys.up) playerJump();
+
+    // Draw player
+    ctx.fillStyle="green";
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+
+    // Draw obstacles
+    for(let i=obstacles.length-1;i>=0;i--){
+      obstacles[i].x -= speed;
+      if(zombieImg.complete && zombieImg.naturalWidth!==0){
+        ctx.drawImage(zombieImg, obstacles[i].x, obstacles[i].y, obstacles[i].width, obstacles[i].height);
+      } else {
+        ctx.fillStyle="red"; ctx.fillRect(obstacles[i].x, obstacles[i].y, obstacles[i].width, obstacles[i].height);
+      }
+      if(player.x < obstacles[i].x+obstacles[i].width && player.x+player.width>obstacles[i].x &&
+         player.y < obstacles[i].y+obstacles[i].height && player.y+player.height>obstacles[i].y){
+        gameOver=true;
+      }
+      if(obstacles[i].x+obstacles[i].width<0) obstacles.splice(i,1);
+    }
+
+    // Draw hearts
+    for(let i=hearts.length-1;i>=0;i--){
+      hearts[i].x -= speed;
+      if(heartImg.complete && heartImg.naturalWidth!==0){
+        ctx.drawImage(heartImg, hearts[i].x, hearts[i].y, hearts[i].width, hearts[i].height);
+      } else {
+        ctx.fillStyle="pink"; ctx.fillRect(hearts[i].x, hearts[i].y, hearts[i].width, hearts[i].height);
+      }
+      if(player.x<hearts[i].x+hearts[i].width && player.x+player.width>hearts[i].x &&
+         player.y<hearts[i].y+hearts[i].height && player.y+player.height>hearts[i].y){
+           hearts.splice(i,1);
+           score++;
+      }
+      if(hearts[i].x+hearts[i].width<0) hearts.splice(i,1);
+    }
+
+    // Score
+    ctx.fillStyle="black";
+    ctx.font="16px Poppins";
+    ctx.fillText("Hearts: "+score,10,20);
+
+    requestAnimationFrame(update);
+  } else {
+    // Game Over
+    ctx.fillStyle="rgba(0,0,0,0.5)";
+    ctx.fillRect(0,0,cw,ch);
+    ctx.fillStyle="white";
+    ctx.font="30px Poppins";
+    ctx.fillText("Game Over 💀", cw/2-90, ch/2-10);
+    ctx.font="20px Poppins";
+    ctx.fillText("Click to Restart", cw/2-70, ch/2+20);
+  }
+}
+
+// Restart game on canvas click
+canvas.addEventListener('click', ()=>{ if(gameOver) resetGame(); });
+
+// Mobile jump button
+function mobileJump(){ playerJump(); }
+
+// Start game immediately
+update();
+</script>
+
+</body>
+</html>
