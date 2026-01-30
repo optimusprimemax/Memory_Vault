@@ -4,36 +4,47 @@
 <meta charset="UTF-8">
 <title>Zombie Runner</title>
 <style>
-    body {
+    * {
         margin: 0;
-        background: #87ceeb; /* Sky */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        font-family: Arial, sans-serif;
+        padding: 0;
+        overflow: hidden;
+    }
+    body {
+        background: #87ceeb;
     }
     canvas {
-        background: linear-gradient(#87ceeb, #dff6ff);
-        border: 2px solid #000;
+        display: block;
     }
 </style>
 </head>
 <body>
 
-<canvas id="game" width="900" height="350"></canvas>
+<canvas id="game"></canvas>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const GROUND_Y = 270;
-let gameSpeed = 5;
+// -------------------- GAME VARIABLES --------------------
+let GROUND_Y = 0;
+let gameSpeed = 6;
 let gravity = 0.5;
 let gameOver = false;
 let score = 0;
+let frame = 0;
 
-// Images
+// -------------------- RESIZE --------------------
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    GROUND_Y = canvas.height - 90;
+
+    // keep player on ground after resize
+    player.y = GROUND_Y - player.height;
+}
+window.addEventListener("resize", resizeCanvas);
+
+// -------------------- IMAGES --------------------
 const charImg = new Image();
 charImg.src = "char.png";
 
@@ -43,21 +54,22 @@ zombieImg.src = "zombie.png";
 const heartImg = new Image();
 heartImg.src = "heart.png";
 
-// Player (BIGGER)
+// -------------------- PLAYER --------------------
 const player = {
-    x: 100,
-    y: GROUND_Y - 80,
-    width: 110,
-    height: 110,
+    x: 120,
+    y: 0,
+    width: 150,
+    height: 170,
     velocityY: 0,
     jump() {
         if (this.y >= GROUND_Y - this.height) {
-            this.velocityY = -14;
+            this.velocityY = -18;
         }
     },
     update() {
         this.velocityY += gravity;
         this.y += this.velocityY;
+
         if (this.y > GROUND_Y - this.height) {
             this.y = GROUND_Y - this.height;
             this.velocityY = 0;
@@ -68,52 +80,57 @@ const player = {
     }
 };
 
-// Obstacles (TOUCH GROUND)
+// Call resize AFTER player exists
+resizeCanvas();
+
+// -------------------- OBSTACLES --------------------
 let obstacles = [];
 function spawnObstacle() {
+    const size = 90;
     obstacles.push({
         x: canvas.width,
-        y: GROUND_Y - 70,
-        width: 50,
-        height: 50
+        y: GROUND_Y - size,
+        width: 60,
+        height: 60
     });
 }
 
-// Hearts (ON GROUND)
+// -------------------- HEARTS --------------------
 let hearts = [];
 function spawnHeart(x) {
     hearts.push({
         x: x,
-        y: GROUND_Y - 35,
-        width: 45,
-        height: 45
+        y: GROUND_Y - 45,
+        width: 55,
+        height: 55
     });
 }
 
-// Clouds (BACKGROUND)
+// -------------------- CLOUDS --------------------
 let clouds = [];
 function spawnCloud() {
     clouds.push({
         x: canvas.width,
-        y: Math.random() * 120 + 20,
-        size: Math.random() * 30 + 40,
-        speed: gameSpeed * 0.4
+        y: Math.random() * 200 + 50,
+        size: Math.random() * 40 + 40,
+        speed: gameSpeed * 0.3
     });
 }
 
-// Controls
+// -------------------- CONTROLS --------------------
 document.addEventListener("keydown", e => {
     if (e.code === "Space") {
         if (gameOver) location.reload();
         player.jump();
     }
 });
-canvas.addEventListener("click", () => {
+
+document.addEventListener("click", () => {
     if (gameOver) location.reload();
     player.jump();
 });
 
-// Collision
+// -------------------- COLLISION --------------------
 function collide(a, b) {
     return (
         a.x < b.x + b.width &&
@@ -123,10 +140,13 @@ function collide(a, b) {
     );
 }
 
-// Game loop
-let frame = 0;
+// -------------------- GAME LOOP --------------------
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Sky
+    ctx.fillStyle = "#87ceeb";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Clouds
     if (frame % 150 === 0) spawnCloud();
@@ -143,7 +163,7 @@ function animate() {
 
     // Ground
     ctx.fillStyle = "#444";
-    ctx.fillRect(0, GROUND_Y, canvas.width, 5);
+    ctx.fillRect(0, GROUND_Y, canvas.width, 6);
 
     if (!gameOver) {
         frame++;
@@ -153,18 +173,16 @@ function animate() {
 
         if (frame % 120 === 0) {
             spawnObstacle();
-            if (Math.random() > 0.6) spawnHeart(canvas.width + 80);
+            if (Math.random() > 0.6) spawnHeart(canvas.width + 120);
         }
 
-        // Obstacles
-        obstacles.forEach((obs, i) => {
-            obs.x -= gameSpeed;
-            ctx.drawImage(zombieImg, obs.x, obs.y, obs.width, obs.height);
-            if (collide(player, obs)) gameOver = true;
-            if (obs.x + obs.width < 0) obstacles.splice(i, 1);
+        obstacles.forEach((o, i) => {
+            o.x -= gameSpeed;
+            ctx.drawImage(zombieImg, o.x, o.y, o.width, o.height);
+            if (collide(player, o)) gameOver = true;
+            if (o.x + o.width < 0) obstacles.splice(i, 1);
         });
 
-        // Hearts
         hearts.forEach((h, i) => {
             h.x -= gameSpeed;
             ctx.drawImage(heartImg, h.x, h.y, h.width, h.height);
@@ -175,18 +193,17 @@ function animate() {
             if (h.x + h.width < 0) hearts.splice(i, 1);
         });
 
-        // Score
         ctx.fillStyle = "#000";
-        ctx.font = "22px Arial";
-        ctx.fillText("❤️ " + score, 20, 30);
+        ctx.font = "28px Arial";
+        ctx.fillText("❤️ " + score, 30, 40);
 
     } else {
         ctx.fillStyle = "#000";
         ctx.textAlign = "center";
-        ctx.font = "42px Arial";
-        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
-        ctx.font = "20px Arial";
-        ctx.fillText("Press Space or Click to Restart", canvas.width / 2, canvas.height / 2 + 20);
+        ctx.font = "56px Arial";
+        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
+        ctx.font = "26px Arial";
+        ctx.fillText("Press Space or Click to Restart", canvas.width / 2, canvas.height / 2 + 45);
     }
 
     requestAnimationFrame(animate);
